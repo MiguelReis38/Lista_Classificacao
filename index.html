@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="icon" sizes="192x192" href="icone.png">
+<link rel="apple-touch-icon" href="icone.png">
+    <title>Arena Manager Pro - Oficial</title>
+    <style>
+        :root { --primary: #1b5e20; --secondary: #2e7d32; --danger: #b71c1c; --warning: #fb8c00; --dark: #263238; --blue: #1976d2; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1250px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .cadastro-box { background: #f1f8e9; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #c8e6c9; }
+        
+        .btn-group { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+        button { flex: 1; min-width: 150px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; color: white; padding: 12px; text-transform: uppercase; transition: 0.3s; }
+        .btn-add { background: var(--secondary); }
+        .btn-sortear { background: var(--warning); }
+        .btn-cloud { background: var(--blue); }
+        .btn-reset { background: #212121; }
+
+        .lista-gerenciamento { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #ddd; min-height: 50px; }
+        .atleta-tag { display: inline-flex; align-items: center; background: #f8f9fa; padding: 5px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 0.8rem; }
+        .btn-del { color: var(--danger); font-weight: bold; margin-left: 8px; cursor: pointer; border: none; background: none; padding: 0 5px; }
+
+        .sumula-card { border: 2px solid #455a64; margin-bottom: 25px; border-radius: 10px; overflow: hidden; background: #fff; }
+        .sumula-header { background: #455a64; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .sumula-body { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #cfd8dc; }
+        .sumula-team { background: white; padding: 10px; overflow-x: auto; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 20px; }
+        th, td { border: 1px solid #eee; padding: 6px; text-align: center; }
+        th { background: #f8f9fa; color: #555; }
+        
+        .destaque-ouro { background: #fffde7; border: 2px solid #fbc02d !important; }
+        input[type="number"] { width: 40px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+        
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-flex">
+        <h1 style="margin:0; color: var(--primary);">🏟️ ARENA MANAGER PRO</h1>
+        <div id="status-cloud" style="font-size: 0.8rem; color: #1976d2; font-weight: bold;">☁️ Conectando...</div>
+    </div>
+
+    <div class="cadastro-box no-print">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="nomeAtleta" placeholder="Nome do Jogador" style="flex:3; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+            <select id="catAtleta" style="flex:1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                <option value="E">GOLEIRO (E)</option>
+                <option value="D">ZAGA (D)</option>
+                <option value="C">LATERAL (C)</option>
+                <option value="B">MEIO (B)</option>
+                <option value="A">ELITE (A)</option>
+            </select>
+            <button class="btn-add" onclick="cadastrarJogador()">CADASTRAR NA NUVEM</button>
+        </div>
+        <div id="lista-ativos" class="lista-gerenciamento">Carregando atletas da planilha...</div>
+    </div>
+
+    <div class="btn-group no-print">
+        <button class="btn-sortear" onclick="gerarRodada()">🎲 SORTEAR (1 GOL + 5 LINHA)</button>
+        <button class="btn-cloud" onclick="sincronizarComPlanilha()">☁️ SALVAR RESULTADOS</button>
+        <button class="btn-reset" onclick="resetarPlanilhaGeral()">💀 ZERAR TUDO</button>
+        <a href="https://docs.google.com/spreadsheets/d/1RIlQYaKcXE38A3-VGTV94fz69VHBy-ZG3DGE-S1vY8I/edit?usp=sharing" target="_blank" 
+           style="text-decoration: none; color: #1b5e20; font-weight: bold; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; background: #e8f5e9; padding: 12px; border-radius: 5px; border: 1px solid #c8e6c9;">
+           📊 PLANILHA ↗
+        </a>
+    </div>
+
+    <div id="sumulas-container"></div>
+
+    <hr>
+    <h2 style="text-align: center; color: var(--primary);">📊 CLASSIFICAÇÃO GERAL</h2>
+    <table id="tabela-ranking">
+        <thead>
+            <tr><th>POS</th><th>ATLETA</th><th>CAT</th><th>JOGOS</th><th>VIT</th><th>GOLS</th><th>🟨</th><th>🟥</th><th>PTS</th></tr>
+        </thead>
+        <tbody id="ranking-body"></tbody>
+    </table>
+
+    <h2 style="text-align: center; color: #1565c0;">🧤 LUVA DE OURO (GOLEIROS)</h2>
+    <table id="tabela-goleiros">
+        <thead>
+            <tr><th>POS</th><th>GOLEIRO</th><th>JOGOS</th><th>GOLS SOFRIDOS</th><th>MÉDIA</th></tr>
+        </thead>
+        <tbody id="goleiros-body"></tbody>
+    </table>
+</div>
+
+<script>
+    let historicoNuvem = [];
+    let statsHoje = {};
+    let timesGerados = [];
+    // URL DO SEU SCRIPT GOOGLE
+    const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbwwUdqL_enJHOaz09Q3iEnShz96Inub4jQgkAd8nXZzu4_hW0AfTZzcH87o7Q1S8HKwrA/exec";
+
+    window.onload = carregarDados;
+
+    async function carregarDados() {
+        try {
+            const response = await fetch(URL_GOOGLE);
+            historicoNuvem = await response.json();
+            document.getElementById('status-cloud').innerText = `✅ ${historicoNuvem.length} Jogadores na Planilha`;
+            atualizarUI();
+            atualizarTabelas();
+        } catch (e) {
+            document.getElementById('status-cloud').innerText = "⚠️ Erro de Conexão com a Planilha";
+        }
+    }
+
+    function atualizarUI() {
+        const lista = document.getElementById('lista-ativos');
+        lista.innerHTML = historicoNuvem.map(a => `
+            <div class="atleta-tag">
+                ${a.nome} (${a.cat})
+                <button class="btn-del" onclick="excluirAtleta('${a.nome}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    // CADASTRO IMEDIATO NA PLANILHA
+    async function cadastrarJogador() {
+        const nomeInput = document.getElementById('nomeAtleta');
+        const nome = nomeInput.value.trim();
+        const cat = document.getElementById('catAtleta').value;
+        
+        if(!nome) return alert("Digite o nome do atleta!");
+        if(historicoNuvem.find(a => a.nome === nome)) return alert("Este nome já existe!");
+
+        document.getElementById('status-cloud').innerText = "⏳ Cadastrando na nuvem...";
+
+        const novo = { nome, cat, p:0, v:0, g:0, sofridos:0, ca:0, cv:0, total:0 };
+        
+        try {
+            await fetch(URL_GOOGLE, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify([novo])
+            });
+            
+            historicoNuvem.push(novo);
+            nomeInput.value = '';
+            atualizarUI();
+            document.getElementById('status-cloud').innerText = "✅ Cadastro Realizado!";
+        } catch (e) {
+            alert("Erro ao salvar. Tente novamente.");
+        }
+    }
+
+    async function excluirAtleta(nome) {
+        if(!confirm(`Excluir ${nome} permanentemente da planilha?`)) return;
+        document.getElementById('status-cloud').innerText = "⏳ Excluindo...";
+        try {
+            await fetch(`${URL_GOOGLE}?action=deletarJogador&nome=${encodeURIComponent(nome)}`);
+            historicoNuvem = historicoNuvem.filter(a => a.nome !== nome);
+            atualizarUI();
+            atualizarTabelas();
+            document.getElementById('status-cloud').innerText = "✅ Excluído!";
+        } catch (e) { alert("Erro ao deletar."); }
+    }
+
+    function gerarRodada() {
+        const goleiros = historicoNuvem.filter(a => a.cat === 'E').sort(() => Math.random() - 0.5);
+        const linha = historicoNuvem.filter(a => a.cat !== 'E').sort(() => Math.random() - 0.5);
+        
+        const nTimes = goleiros.length;
+        if(nTimes < 2) return alert("Precisa de no mínimo 2 goleiros cadastrados!");
+
+        timesGerados = Array.from({ length: nTimes }, () => []);
+        
+        // 1 Goleiro por time
+        goleiros.forEach((g, i) => timesGerados[i].push(g));
+
+        // 5 de Linha por time (Distribuição justa)
+        let pIdx = 0;
+        for(let l=0; l<5; l++) {
+            for(let t=0; t<nTimes; t++) {
+                if(linha[pIdx]) {
+                    timesGerados[t].push(linha[pIdx]);
+                    pIdx++;
+                }
+            }
+        }
+
+        renderizarSumulas();
+    }
+
+    function renderizarSumulas() {
+        const container = document.getElementById('sumulas-container');
+        container.innerHTML = '<h2 style="text-align:center; color:#455a64">📋 SÚMULAS DA RODADA</h2>';
+        
+        for(let i=0; i < timesGerados.length; i++){
+            for(let j=i+1; j < timesGerados.length; j++){
+                container.innerHTML += `
+                <div class="sumula-card">
+                    <div class="sumula-header">CONFRONTO: TIME ${i+1} VS TIME ${j+1}
+                        <select class="win-val" onchange="atualizarTabelas()" style="padding:5px; border-radius:4px">
+                            <option value="">RESULTADO...</option>
+                            <option value="0">VITÓRIA T${i+1}</option>
+                            <option value="1">VITÓRIA T${j+1}</option>
+                            <option value="99">EMPATE</option>
+                        </select>
+                    </div>
+                    <div class="sumula-body">
+                        <div class="sumula-team">${gerarTabelaJogo(timesGerados[i])}</div>
+                        <div class="sumula-team">${gerarTabelaJogo(timesGerados[j])}</div>
+                    </div>
+                </div>`;
+            }
+        }
+        window.scrollTo(0, 500);
+        atualizarTabelas();
+    }
+
+    function gerarTabelaJogo(time) {
+        return `<table>
+            <thead><tr><th>PRES</th><th>NOME</th><th>⚽</th><th>⚽⚰️</th><th>🟨</th><th>🟥</th></tr></thead>
+            <tbody>${time.map(p => `
+            <tr data-nome="${p.nome}" data-cat="${p.cat}">
+                <td><input type="checkbox" checked class="pres" onchange="atualizarTabelas()"></td>
+                <td align="left"><strong>${p.nome}</strong></td>
+                <td><input type="number" class="g" value="0" min="0" oninput="atualizarTabelas()"></td>
+                <td>${p.cat === 'E' ? '<input type="number" class="sof" value="0" min="0" oninput="atualizarTabelas()">' : '-'}</td>
+                <td><input type="checkbox" class="ca" onchange="atualizarTabelas()"></td>
+                <td><input type="checkbox" class="cv" onchange="atualizarTabelas()"></td>
+            </tr>`).join('')}</tbody></table>`;
+    }
+
+    function atualizarTabelas() {
+        statsHoje = {};
+        historicoNuvem.forEach(h => {
+            statsHoje[h.nome] = { ...h, ph:0, vh:0, gh:0, sofh:0, cah:0, cvh:0 };
+        });
+
+        document.querySelectorAll('.sumula-card').forEach(card => {
+            const winVal = card.querySelector('.win-val').value;
+            card.querySelectorAll('.sumula-team').forEach((team, tIdx) => {
+                team.querySelectorAll('tr[data-nome]').forEach(row => {
+                    const n = row.dataset.nome;
+                    if(row.querySelector('.pres').checked) {
+                        statsHoje[n].ph += 1;
+                        statsHoje[n].gh += parseInt(row.querySelector('.g').value) || 0;
+                        if(row.dataset.cat === 'E') statsHoje[n].sofh += parseInt(row.querySelector('.sof').value) || 0;
+                        if(row.querySelector('.ca').checked) statsHoje[n].cah += 1;
+                        if(row.querySelector('.cv').checked) statsHoje[n].cvh += 1;
+                        if(winVal !== "" && winVal == tIdx) statsHoje[n].vh += 1;
+                    }
+                });
+            });
+        });
+
+        const tbody = document.getElementById('ranking-body');
+        tbody.innerHTML = '';
+        let ranking = Object.values(statsHoje).map(j => {
+            let p = Number(j.p||0)+j.ph, v = Number(j.v||0)+j.vh, g = Number(j.g||0)+j.gh, ca = Number(j.ca||0)+j.cah, cv = Number(j.cv||0)+j.cvh;
+            let pts = (p*1)+(v*3)+(g*1)-(ca*1)-(cv*3);
+            return { ...j, tp:p, tv:v, tg:g, tca:ca, tcv:cv, pts };
+        }).sort((a,b) => b.pts - a.pts || b.tv - a.tv);
+
+        ranking.forEach((j, i) => {
+            tbody.innerHTML += `<tr><td>${i+1}º</td><td>${j.nome}</td><td>${j.cat}</td><td>${j.tp}</td><td>${j.tv}</td><td>${j.tg}</td><td>${j.tca}</td><td>${j.tcv}</td><td><strong>${j.pts}</strong></td></tr>`;
+        });
+
+        const gBody = document.getElementById('goleiros-body');
+        gBody.innerHTML = '';
+        ranking.filter(j => j.cat === 'E').map(g => {
+            let ts = Number(g.sofridos||0)+g.sofh;
+            return { ...g, ts, med: g.tp > 0 ? (ts/g.tp).toFixed(1) : 0 };
+        }).sort((a,b) => a.ts - b.ts || b.tv - a.tv).forEach((g, i) => {
+            gBody.innerHTML += `<tr class="${i === 0 ? 'destaque-ouro' : ''}"><td>${i+1}º</td><td>${g.nome}</td><td>${g.tp}</td><td>${g.ts}</td><td>${g.med}</td></tr>`;
+        });
+    }
+
+    async function sincronizarComPlanilha() {
+        const dados = Object.values(statsHoje).filter(j => j.ph > 0).map(j => ({
+            nome: j.nome, cat: j.cat, p: j.ph, v: j.vh, g: j.gh, sofridos: j.sofh, ca: j.cah, cv: j.cvh, total: (j.ph*1+j.vh*3+j.gh*1-j.cah*1-j.cvh*3)
+        }));
+        
+        if(dados.length === 0) return alert("Nenhum dado de jogo para salvar!");
+        if(!confirm("Salvar dados na planilha e encerrar rodada?")) return;
+
+        document.getElementById('status-cloud').innerText = "⏳ Sincronizando...";
+        try {
+            await fetch(URL_GOOGLE, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
+            alert("✅ Dados enviados com sucesso!");
+            location.reload(); 
+        } catch(e) { alert("Erro ao salvar dados."); }
+    }
+
+    async function resetarPlanilhaGeral() {
+        if(confirm("💀 ATENÇÃO: Deseja apagar TODO o ranking da planilha?")) {
+            await fetch(URL_GOOGLE + "?action=limparTabelaCompleta");
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
