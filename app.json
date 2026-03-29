@@ -1,0 +1,16 @@
+{
+  "short_name": "ArenaManager",
+  "name": "Arena Manager Pro - Gestão de Futebol",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#1b5e20",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#1b5e20"
+}
