@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="app.json">
+<meta name="theme-color" content="#1b5e20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Arena Manager - Ranking Oficial</title>
+    <style>
+        :root { --primary: #1b5e20; --secondary: #2e7d32; --dark: #263238; --blue: #1565c0; --gold: #fbc02d; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 30px; }
+        h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        
+        .link-planilha { text-decoration: none; color: var(--secondary); font-weight: bold; font-size: 0.85rem; background: #e8f5e9; padding: 8px 12px; border-radius: 5px; border: 1px solid #c8e6c9; transition: 0.3s; }
+        .link-planilha:hover { background: #c8e6c9; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 40px; background: white; }
+        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: center; }
+        th { background: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+        
+        tr:nth-child(even) { background-color: #fafafa; }
+        .posicao { font-weight: bold; color: #777; width: 40px; }
+        .destaque-ouro { background: #fffde7 !important; border: 2px solid var(--gold) !important; font-weight: bold; }
+        
+        h2 { text-align: center; color: var(--dark); border-left: 5px solid var(--primary); padding-left: 10px; margin-bottom: 20px; }
+        .status { text-align: center; font-size: 0.8rem; color: #999; margin-top: -15px; margin-bottom: 25px; }
+
+        /* Mobile Responsivo */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            th, td { padding: 8px 4px; font-size: 0.75rem; }
+            .hide-mobile { display: none; }
+        }
+
+        
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-flex">
+        <h1>📊 Ranking Arena</h1>
+        <a href="https://docs.google.com/spreadsheets/d/1RIlQYaKcXE38A3-VGTV94fz69VHBy-ZG3DGE-S1vY8I/edit?usp=sharing" target="_blank" class="link-planilha">
+            Abrir Planilha Completa ↗
+        </a>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 50px;">
+        <p>Carregando estatísticas atualizadas...</p>
+    </div>
+
+    <div id="conteudo" style="display: none;">
+        <h2>Classificação Geral</h2>
+        <div class="status" id="last-update">Sincronizado com a nuvem</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th align="left">Atleta</th>
+                    <th class="hide-mobile">Cat</th>
+                    <th>Jogos</th>
+                    <th>Vit</th>
+                    <th>Gols</th>
+                    <th class="hide-mobile">🟨</th>
+                    <th class="hide-mobile">🟥</th>
+                    <th>Pts</th>
+                </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+        </table>
+
+        <h2 style="border-color: var(--blue);">🧤 Luva de Ouro</h2>
+        <div class="status">Critério: Menos gols sofridos / Desempate: Vitórias</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th align="left">Goleiro</th>
+                    <th>Partidas</th>
+                    <th>Gols Sofridos</th>
+                    <th>Média</th>
+                </tr>
+            </thead>
+            <tbody id="goleiros-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // URL do seu Google Apps Script (o mesmo que você usou no outro código)
+    const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbwwUdqL_enJHOaz09Q3iEnShz96Inub4jQgkAd8nXZzu4_hW0AfTZzcH87o7Q1S8HKwrA/exec";
+
+    window.onload = async function() {
+        try {
+            const response = await fetch(URL_GOOGLE);
+            const data = await response.json();
+            
+            if(data && data.length > 0) {
+                renderizarRanking(data);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('conteudo').style.display = 'block';
+                document.getElementById('last-update').innerText = "Atualizado em: " + new Date().toLocaleDateString();
+            }
+        } catch (e) {
+            document.getElementById('loading').innerHTML = "<p style='color:red'>Erro ao carregar os dados. Verifique a conexão.</p>";
+        }
+    };
+
+    function renderizarRanking(dados) {
+        const tbody = document.getElementById('ranking-body');
+        const gBody = document.getElementById('goleiros-body');
+        
+        // 1. Processar Ranking Geral (Ordenação por Pontos e depois Vitórias)
+        const rankingGeral = [...dados].sort((a, b) => {
+            if (b.total !== a.total) return b.total - a.total;
+            return b.v - a.v;
+        });
+
+        tbody.innerHTML = rankingGeral.map((j, i) => `
+            <tr>
+                <td class="posicao">${i+1}º</td>
+                <td align="left"><strong>${j.nome}</strong></td>
+                <td class="hide-mobile">${j.cat}</td>
+                <td>${j.p}</td>
+                <td>${j.v}</td>
+                <td>${j.g}</td>
+                <td class="hide-mobile">${j.ca || 0}</td>
+                <td class="hide-mobile">${j.cv || 0}</td>
+                <td><strong>${j.total}</strong></td>
+            </tr>
+        `).join('');
+
+        // 2. Processar Luva de Ouro (Filtra categoria E e ordena por menos gols sofridos)
+        const goleiros = dados.filter(j => j.cat === 'E').sort((a, b) => {
+            if (a.sofridos !== b.sofridos) return a.sofridos - b.sofridos;
+            return b.v - a.v;
+        });
+
+        gBody.innerHTML = goleiros.map((g, i) => {
+            const media = g.p > 0 ? (g.sofridos / g.p).toFixed(1) : 0;
+            return `
+                <tr class="${i === 0 ? 'destaque-ouro' : ''}">
+                    <td class="posicao">${i+1}º</td>
+                    <td align="left">${g.nome}</td>
+                    <td>${g.p}</td>
+                    <td>${g.sofridos}</td>
+                    <td>${media}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+</script>
+
+</body>
+</html>
