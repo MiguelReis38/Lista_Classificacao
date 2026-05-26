@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GolMestre - Acesso</title>
+    <style>
+        /* ─── FONTES E CORES (Substituindo o objeto GM do React) ─── */
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+        
+        :root {
+            --gm-green: #ADFF2F;
+            --gm-green-dark: #7BBF00;
+            --gm-black: #080808;
+            --gm-surface: #111111;
+            --gm-surface2: #191919;
+            --gm-border: rgba(173,255,47,0.13);
+            --gm-border-hover: rgba(173,255,47,0.32);
+            --gm-text: #EFEFEF;
+            --gm-muted: #555;
+            --gm-red: #E24B4A;
+        }
+
+        /* ─── RESET E ESTILOS GERAIS ─── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--gm-black); color: var(--gm-text); font-family: 'Barlow', sans-serif; min-height: 100vh; }
+        input, button { font-family: 'Barlow', sans-serif; }
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(173,255,47,0.25); border-radius: 2px; }
+
+        /* ─── ESTRUTURA PRINCIPAL ─── */
+        .auth-container { display: flex; min-height: 100vh; flex-direction: row; }
+        .auth-left { flex: 1.2; display: flex; flex-direction: column; padding: 40px; border-right: 1px solid #1a1a1a; background: linear-gradient(145deg, #0a0a0a 0%, #050505 100%); position: relative; overflow: hidden; }
+        .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; position: relative; }
+
+        @media (max-width: 900px) {
+            .auth-container { flex-direction: column; }
+            .auth-left { border-right: none; border-bottom: 1px solid #1a1a1a; padding: 30px 20px; }
+            .auth-right { padding: 30px 20px; }
+        }
+
+        /* ─── COMPONENTES ─── */
+        .logo { font-family: 'Barlow Condensed'; font-size: 32px; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; margin-bottom: 40px; }
+        .logo-icon { background: var(--gm-green); color: var(--gm-black); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 18px; }
+
+        .hero-title { font-family: 'Barlow Condensed'; font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; text-transform: uppercase; }
+        .hero-subtitle { color: var(--gm-muted); font-size: 18px; max-width: 400px; margin-bottom: 40px; }
+
+        /* Formulário */
+        .form-box { width: 100%; max-width: 380px; }
+        .form-header { margin-bottom: 30px; }
+        .form-title { font-family: 'Barlow Condensed'; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .form-subtitle { color: var(--gm-muted); font-size: 15px; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .input-group label { font-size: 12px; font-weight: 600; color: var(--gm-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+        .input-group input { background: var(--gm-surface); border: 1px solid var(--gm-surface2); color: var(--gm-text); padding: 14px 16px; border-radius: 8px; font-size: 16px; transition: all 0.2s; outline: none; }
+        .input-group input:focus { border-color: var(--gm-green); background: #151515; box-shadow: 0 0 0 3px rgba(173,255,47,0.1); }
+
+        .btn-primary { background: var(--gm-green); color: var(--gm-black); border: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em; width: 100%; display: flex; justify-content: center; align-items: center; }
+        .btn-primary:hover { background: var(--gm-green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(173,255,47,0.2); }
+        .btn-outline { background: transparent; color: var(--gm-text); border: 1px solid var(--gm-surface2); padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; justify-content: center; }
+        .btn-outline:hover { background: var(--gm-surface); border-color: var(--gm-border-hover); }
+
+        .toggle-link { text-align: center; margin-top: 24px; font-size: 14px; color: var(--gm-muted); }
+        .toggle-link span { color: var(--gm-green); font-weight: 600; cursor: pointer; transition: color 0.2s; }
+        .toggle-link span:hover { color: var(--gm-green-dark); }
+
+        /* Grid de Planos */
+        .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .plans-grid { grid-template-columns: 1fr; } }
+        
+        .plan-card { background: var(--gm-surface); border-radius: 13px; padding: 22px; position: relative; border: 0.5px solid #1e1e1e; }
+        .plan-card.featured { border-color: var(--gm-green); }
+        .plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--gm-green); color: var(--gm-black); font-size: 10px; font-weight: 800; padding: 3px 14px; border-radius: 20px; letter-spacing: 0.08em; }
+        
+        .feat-item { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; font-size: 12px; }
+        .feat-missing { opacity: 0.25; }
+
+        /* Toast de Notificação */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 4px solid transparent; pointer-events: none; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: var(--gm-surface); color: var(--gm-text); border-left-color: var(--gm-green); }
+        .toast.error { background: var(--gm-surface); color: var(--gm-text); border-left-color: var(--gm-red); }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="logo">
+                <div class="logo-icon">⚽</div> GOLMESTRE
+            </div>
+            
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <h1 class="hero-title">O controle absoluto<br>do seu <span style="color: var(--gm-green);">time.</span></h1>
+                <p class="hero-subtitle">Estatísticas, escalações, finanças e gestão de elenco em uma única plataforma feita para quem vive o futebol.</p>
+                
+                <div class="plans-grid">
+                    <div class="plan-card">
+                        <div style="font-family: 'Barlow Condensed'; font-size: 22px; font-weight: 700; margin-bottom: 4px;">Básico</div>
+                        <div style="font-size: 21px; font-weight: 600; color: #EFEFEF; margin-bottom: 18px;">Grátis</div>
+                        
+                        <div class="feat-item"><span style="color: #EFEFEF;">✓</span> 1 Time</div>
+                        <div class="feat-item"><span style="color: #EFEFEF;">✓</span> Até 15 Jogadores</div>
+                        <div class="feat-item"><span style="color: #EFEFEF;">✓</span> Escalação Básica</div>
+                        <div class="feat-item feat-missing"><span>✕</span> Estatísticas Avançadas</div>
+                        <div class="feat-item feat-missing"><span>✕</span> Controle Financeiro</div>
+                        
+                        <button class="btn-outline" style="margin-top: 18px;">COMEÇAR GRÁTIS</button>
+                    </div>
+
+                    <div class="plan-card featured">
+                        <div class="plan-badge">MAIS POPULAR</div>
+                        <div style="font-family: 'Barlow Condensed'; font-size: 22px; font-weight: 700; margin-bottom: 4px;">Pro</div>
+                        <div style="font-size: 21px; font-weight: 600; color: var(--gm-green); margin-bottom: 18px;">R$ 19,90/mês</div>
+                        
+                        <div class="feat-item"><span style="color: var(--gm-green);">✓</span> Times Ilimitados</div>
+                        <div class="feat-item"><span style="color: var(--gm-green);">✓</span> Jogadores Ilimitados</div>
+                        <div class="feat-item"><span style="color: var(--gm-green);">✓</span> Relatórios Completos</div>
+                        <div class="feat-item"><span style="color: var(--gm-green);">✓</span> Controle Financeiro</div>
+                        <div class="feat-item"><span style="color: var(--gm-green);">✓</span> Exportação de Dados</div>
+                        
+                        <button class="btn-primary" style="margin-top: 18px;">ASSINAR PRO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-right">
+            <div class="form-box">
+                <div class="form-header">
+                    <h2 id="form-title" class="form-title">BEM-VINDO DE VOLTA</h2>
+                    <p id="form-subtitle" class="form-subtitle">Acesse sua conta para gerenciar seu time.</p>
+                </div>
+
+                <form id="auth-form">
+                    <div class="input-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" placeholder="seu@email.com" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn-primary" style="margin-top: 10px;">ENTRAR NO GOLMESTRE</button>
+                </form>
+
+                <div class="toggle-link" id="toggle-mode">
+                    Não tem uma conta? <span onclick="toggleAuthMode()">Crie agora</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Mensagem aqui</div>
+
+    <script>
+        // Referências do DOM (HTML)
+        const formTitle = document.getElementById('form-title');
+        const formSubtitle = document.getElementById('form-subtitle');
+        const toggleModeContainer = document.getElementById('toggle-mode');
+        const submitBtn = document.getElementById('submit-btn');
+        const authForm = document.getElementById('auth-form');
+        const toastEl = document.getElementById('toast');
+
+        // Estado equivalente ao useState do React
+        let isLogin = true;
+        let toastTimeout;
+
+        // Função para alternar entre Login e Cadastro
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            
+            // Limpa os campos
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+
+            if (isLogin) {
+                formTitle.textContent = "BEM-VINDO DE VOLTA";
+                formSubtitle.textContent = "Acesse sua conta para gerenciar seu time.";
+                submitBtn.textContent = "ENTRAR NO GOLMESTRE";
+                toggleModeContainer.innerHTML = 'Não tem uma conta? <span onclick="toggleAuthMode()">Crie agora</span>';
+            } else {
+                formTitle.textContent = "CRIE SUA CONTA";
+                formSubtitle.textContent = "Comece a gerenciar seus times como um profissional.";
+                submitBtn.textContent = "CADASTRAR";
+                toggleModeContainer.innerHTML = 'Já tem uma conta? <span onclick="toggleAuthMode()">Faça login</span>';
+            }
+        }
+
+        // Função para mostrar notificações (Toast)
+        function showToast(message, type = 'error') {
+            toastEl.textContent = message;
+            toastEl.className = `toast show ${type}`;
+            
+            // Reseta o timer para a notificação sumir
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // Função que lida com o envio do formulário
+        authForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Evita que a página recarregue
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Validação simples
+            if (!email || !password) {
+                showToast("Por favor, preencha todos os campos.", "error");
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast("A senha deve ter pelo menos 6 caracteres.", "error");
+                return;
+            }
+
+            // Aqui entraria a chamada ao Supabase. 
+            // Como estamos no HTML puro, simulamos o sucesso:
+            if (isLogin) {
+                showToast("Login realizado com sucesso!", "success");
+            } else {
+                showToast("Conta criada com sucesso!", "success");
+            }
+        });
+    </script>
+</body>
+</html>
